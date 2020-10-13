@@ -177,7 +177,7 @@ def get_valid_movements(piece):
 
             valid_movements.append(position)
 
-    if piece.piece.upper() == "R":
+    if piece.piece.upper() == "R" or piece.piece.upper() == "Q":
         x = letter_to_number(piece.position[0])
         y = int(piece.position[1])
 
@@ -249,6 +249,86 @@ def get_valid_movements(piece):
 
             valid_movements.append(position)
 
+            target_y += 1
+
+    if piece.piece.upper() == "B" or piece.piece.upper() == "Q":
+        x = letter_to_number(piece.position[0])
+        y = int(piece.position[1])
+
+        target_x = x - 1
+        target_y = y - 1
+
+        while target_x >= 0 and target_y >= 1:
+            target_letter = number_to_letter(target_x)
+            position = target_letter + str(target_y)
+
+            target_piece = get_piece_on_position(position)
+
+            if target_piece is not None:
+                if target_piece.color != piece.color:
+                    valid_movements.append(position)
+                break
+
+            valid_movements.append(position)
+
+            target_x -= 1
+            target_y -= 1
+
+        target_x = x + 1
+        target_y = y - 1
+
+        while target_x <= 7 and target_y >= 1:
+            target_letter = number_to_letter(target_x)
+            position = target_letter + str(target_y)
+
+            target_piece = get_piece_on_position(position)
+
+            if target_piece is not None:
+                if target_piece.color != piece.color:
+                    valid_movements.append(position)
+                break
+
+            valid_movements.append(position)
+
+            target_x += 1
+            target_y -= 1
+
+        target_x = x - 1
+        target_y = y + 1
+
+        while target_x >= 0 and target_y <= 8:
+            target_letter = number_to_letter(target_x)
+            position = target_letter + str(target_y)
+
+            target_piece = get_piece_on_position(position)
+
+            if target_piece is not None:
+                if target_piece.color != piece.color:
+                    valid_movements.append(position)
+                break
+
+            valid_movements.append(position)
+
+            target_x -= 1
+            target_y += 1
+
+        target_x = x + 1
+        target_y = y + 1
+
+        while target_x <= 7 and target_y <= 8:
+            target_letter = number_to_letter(target_x)
+            position = target_letter + str(target_y)
+
+            target_piece = get_piece_on_position(position)
+
+            if target_piece is not None:
+                if target_piece.color != piece.color:
+                    valid_movements.append(position)
+                break
+
+            valid_movements.append(position)
+
+            target_x += 1
             target_y += 1
 
     return valid_movements
