@@ -126,7 +126,61 @@ def get_piece_on_position(position):
     return None
 
 
+def get_valid_movements(piece):
+
+    valid_movements = []
+
+    if piece.piece.upper() == "P" and piece.color == "w":
+        if piece.position[1] == "2":
+            valid_movements.append(piece.position[0] + "3")
+            valid_movements.append(piece.position[0] + "4")
+        else:
+            valid_movements.append(piece.position[0] + str(int(piece.position[1]) + 1))
+
+    if piece.piece.upper() == "P" and piece.color == "b":
+        if piece.position[1] == "7":
+            valid_movements.append(piece.position[0] + "6")
+            valid_movements.append(piece.position[0] + "5")
+        else:
+            valid_movements.append(piece.position[0] + str(int(piece.position[1]) - 1))
+
+    if piece.piece.upper() == "N":
+        x = letter_to_number(piece.position[0])
+        y = piece.position[1]
+
+        possibilities = [
+            (int(x) + 2, int(y) + 1),
+            (int(x) + 1, int(y) + 2),
+            (int(x) - 2, int(y) + 1),
+            (int(x) - 1, int(y) + 2),
+            (int(x) - 2, int(y) - 1),
+            (int(x) - 1, int(y) - 2),
+            (int(x) + 2, int(y) - 1),
+            (int(x) + 1, int(y) - 2),
+        ]
+
+        for possibility in possibilities:
+
+            if possibility[1] < 1 or possibility[1] > 8:
+                continue
+
+            if possibility[0] < 0 or possibility[0] > 7:
+                continue
+
+            position = number_to_letter(possibility[0]) + str(possibility[1])
+
+            target_piece = get_piece_on_position(position)
+
+            if target_piece and target_piece.color == piece.color:
+                continue
+
+            valid_movements.append(position)
+
+    return valid_movements
+
+
 selected_piece = (-1, -1)
+valid_movements = []
 
 turn = "w"
 
@@ -141,10 +195,15 @@ while True:
 
             if piece and piece.color == turn:
                 selected_piece = (event.pos[0] // 100, event.pos[1] // 100)
+                valid_movements = get_valid_movements(piece)
                 continue
 
             if selected_piece[0] != -1:
-                # valid movement
+
+                if letter + str(number) not in valid_movements:
+                    print(letter + str(number))
+                    continue
+
                 piece_letter = number_to_letter(selected_piece[0])
                 piece_number = 8 - (selected_piece[1])
                 old_piece = get_piece_on_position(piece_letter + str(piece_number))
@@ -154,13 +213,13 @@ while True:
                     piece_positions.remove(piece)
 
                 selected_piece = (-1, -1)
+                valid_movements = []
 
                 if turn == "w":
                     turn = "b"
                 else:
                     turn = "w"
 
-                print(piece_positions)
                 continue
 
         if event.type == pygame.QUIT:
@@ -200,6 +259,27 @@ while True:
                 + center_piece_img,
                 ((8 - int(piece_position.position[1])) * block_size) + center_piece_img,
             ),
+        )
+
+    for valid_movement in valid_movements:
+        x = letter_to_number(valid_movement[0])
+        y = 8 - int(valid_movement[1])
+        position = (
+            int((x * block_size) + (block_size / 2)),
+            int((y * block_size) + (block_size / 2)),
+        )
+        pygame.draw.circle(
+            gameDisplay,
+            (100, 150, 100),
+            position,
+            14,
+        )
+        pygame.draw.circle(
+            gameDisplay,
+            (0, 0, 0),
+            position,
+            15,
+            1,
         )
 
     pygame.display.update()
