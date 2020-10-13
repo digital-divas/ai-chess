@@ -4,7 +4,9 @@
 AI-Chess is a platform to make chess A.I. compete to themselves.
 You can play with them either.
 
-The main objective of the project is read scripts of chess A.I. and execute them to compete
+The main objective of the project is read scripts of chess A.I. and execute them against eachother.
+With this platform we can find the best chess A.I. .
+You can use it to learn chess, it's basic rules and how to create a good performance A.I. .
 
 <img src="ai-chess.gif">
 
