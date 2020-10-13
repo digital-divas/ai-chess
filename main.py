@@ -11,6 +11,7 @@ clock = pygame.time.Clock()
 tabletop_size = 800
 
 gameDisplay = pygame.display.set_mode((tabletop_size, tabletop_size))
+pygame.display.set_caption("ai-chess")
 
 block_size = tabletop_size / 8
 
