@@ -176,6 +176,80 @@ def get_valid_movements(piece):
 
             valid_movements.append(position)
 
+    if piece.piece.upper() == "R":
+        x = letter_to_number(piece.position[0])
+        y = int(piece.position[1])
+
+        target_x = x - 1
+
+        while target_x >= 0:
+            target_letter = number_to_letter(target_x)
+            position = target_letter + str(y)
+
+            target_piece = get_piece_on_position(position)
+
+            if target_piece is not None:
+                if target_piece.color != piece.color:
+                    valid_movements.append(position)
+                break
+
+            valid_movements.append(position)
+
+            target_x -= 1
+
+        target_x = x + 1
+
+        while target_x <= 7:
+            target_letter = number_to_letter(target_x)
+
+            position = target_letter + str(y)
+
+            target_piece = get_piece_on_position(position)
+
+            if target_piece is not None:
+                if target_piece.color != piece.color:
+                    valid_movements.append(position)
+                break
+
+            valid_movements.append(position)
+
+            target_x += 1
+
+        target_y = y - 1
+
+        while target_y >= 1:
+            target_letter = number_to_letter(x)
+            position = target_letter + str(target_y)
+
+            target_piece = get_piece_on_position(position)
+
+            if target_piece is not None:
+                if target_piece.color != piece.color:
+                    valid_movements.append(position)
+                break
+
+            valid_movements.append(position)
+
+            target_y -= 1
+
+        target_y = y + 1
+
+        while target_y <= 8:
+            target_letter = number_to_letter(x)
+
+            position = target_letter + str(target_y)
+
+            target_piece = get_piece_on_position(position)
+
+            if target_piece is not None:
+                if target_piece.color != piece.color:
+                    valid_movements.append(position)
+                break
+
+            valid_movements.append(position)
+
+            target_y += 1
+
     return valid_movements
 
 
@@ -201,7 +275,6 @@ while True:
             if selected_piece[0] != -1:
 
                 if letter + str(number) not in valid_movements:
-                    print(letter + str(number))
                     continue
 
                 piece_letter = number_to_letter(selected_piece[0])
