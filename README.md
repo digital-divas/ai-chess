@@ -1,12 +1,12 @@
 # ai-chess
 <img src="https://img.shields.io/badge/python-3.7.5-blue"> <img src="https://img.shields.io/github/license/digital-divas/PINP">
 
-AI-Chess is a platform to make chess A.I. compete to themselves.
+AI-Chess is a platform to make chess artificial intelligences compete to themselves.
 You can play with them either.
 
-The main objective of the project is read scripts of chess A.I. and execute them against eachother.
-With this platform we can find the best chess A.I. .
-You can use it to learn chess, it's basic rules and how to create a good performance A.I. .
+The main objective of the project is read scripts of chess artificial intelligences and execute them against eachother.
+With this platform we can will be able to find the best chess artificial intelligences.
+You can use it to learn chess, it's basic rules and how to create an artificial intelligence with good performance.
 
 <img src="ai-chess.gif">
 
