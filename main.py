@@ -21,6 +21,9 @@ class PiecePosition(object):
         self.piece = piece
         self.position = position
 
+    def __repr__(self):
+        return f"<PiecePosition - color: {self.color} - piece: {self.piece} - position: {self.position} >"
+
 
 piece_image = {
     "w-P": pygame.image.load(os.path.join("icons", "w-pawn.png")),
@@ -96,9 +99,69 @@ def letter_to_number(letter):
         return 7
 
 
+def number_to_letter(number):
+    if number == 0:
+        return "a"
+    if number == 1:
+        return "b"
+    if number == 2:
+        return "c"
+    if number == 3:
+        return "d"
+    if number == 4:
+        return "e"
+    if number == 5:
+        return "f"
+    if number == 6:
+        return "g"
+    if number == 7:
+        return "h"
+
+
+def get_piece_on_position(position):
+    for piece_position in piece_positions:
+        if piece_position.position == position:
+            return piece_position
+
+    return None
+
+
+selected_piece = (-1, -1)
+
+turn = "w"
+
 while True:
 
     for event in pygame.event.get():
+
+        if event.type == pygame.MOUSEBUTTONDOWN:
+            letter = number_to_letter(event.pos[0] // 100)
+            number = 8 - (event.pos[1] // 100)
+            piece = get_piece_on_position(letter + str(number))
+
+            if piece and piece.color == turn:
+                selected_piece = (event.pos[0] // 100, event.pos[1] // 100)
+                continue
+
+            if selected_piece[0] != -1:
+                # valid movement
+                piece_letter = number_to_letter(selected_piece[0])
+                piece_number = 8 - (selected_piece[1])
+                old_piece = get_piece_on_position(piece_letter + str(piece_number))
+                old_piece.position = letter + str(number)
+
+                if piece and piece.color != turn:
+                    piece_positions.remove(piece)
+
+                selected_piece = (-1, -1)
+
+                if turn == "w":
+                    turn = "b"
+                else:
+                    turn = "w"
+
+                print(piece_positions)
+                continue
 
         if event.type == pygame.QUIT:
             pygame.quit()
@@ -109,7 +172,16 @@ while True:
     # draw tabletop
     for x in range(0, 8):
         for y in range(0, 8):
-            if (x + y) % 2 == 0:
+
+            if selected_piece[0] == x and selected_piece[1] == y:
+                pygame.draw.rect(
+                    gameDisplay,
+                    (155, 255, 155),
+                    (x * block_size, y * block_size, block_size, block_size),
+                    0,
+                )
+
+            elif (x + y) % 2 == 0:
                 pygame.draw.rect(
                     gameDisplay,
                     (255, 255, 255),
