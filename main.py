@@ -433,8 +433,17 @@ while True:
                 from_position = old_piece.position
                 old_piece.position = letter + str(number)
 
+                # default capture
                 if piece and piece.color != turn:
                     piece_positions.remove(piece)
+
+                # capture by en passant
+                if (
+                    old_piece.piece == "P"
+                    and from_position[0] != old_piece.position[0]
+                    and piece is None
+                ):
+                    piece_positions.remove(movements_history[-1]["piece"])
 
                 selected_piece = (-1, -1)
                 valid_movements = []
