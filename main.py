@@ -131,19 +131,59 @@ def get_valid_movements(piece):
 
     valid_movements = []
 
-    if piece.piece.upper() == "P" and piece.color == "w":
-        if piece.position[1] == "2":
-            valid_movements.append(piece.position[0] + "3")
-            valid_movements.append(piece.position[0] + "4")
-        else:
-            valid_movements.append(piece.position[0] + str(int(piece.position[1]) + 1))
+    if piece.piece.upper() == "P":
 
-    if piece.piece.upper() == "P" and piece.color == "b":
-        if piece.position[1] == "7":
-            valid_movements.append(piece.position[0] + "6")
-            valid_movements.append(piece.position[0] + "5")
-        else:
-            valid_movements.append(piece.position[0] + str(int(piece.position[1]) - 1))
+        direction = 1
+        if piece.color == "b":
+            direction = -1
+
+        if (
+            (piece.color == "w" and piece.position[1] == "2")
+            or (piece.color == "b" and piece.position[1] == "7")
+        ) and get_piece_on_position(
+            piece.position[0] + str(int(piece.position[1]) + (1 * direction))
+        ) is None:
+            valid_movements.append(
+                piece.position[0] + str(int(piece.position[1]) + (1 * direction))
+            )
+            if (
+                get_piece_on_position(
+                    piece.position[0] + str(int(piece.position[1]) + (2 * direction))
+                )
+                is None
+            ):
+                valid_movements.append(
+                    piece.position[0] + str(int(piece.position[1]) + (2 * direction))
+                )
+        elif (
+            get_piece_on_position(
+                piece.position[0] + str(int(piece.position[1]) + (1 * direction))
+            )
+            is None
+        ):
+            valid_movements.append(
+                piece.position[0] + str(int(piece.position[1]) + (1 * direction))
+            )
+
+        left_piece = None
+        right_piece = None
+
+        number = letter_to_number(piece.position[0]) - 1
+        if number >= 0:
+            left_piece = get_piece_on_position(
+                number_to_letter(number) + str(int(piece.position[1]) + (1 * direction))
+            )
+
+        number = letter_to_number(piece.position[0]) + 1
+        if number <= 7:
+            right_piece = get_piece_on_position(
+                number_to_letter(number) + str(int(piece.position[1]) + (1 * direction))
+            )
+
+        if left_piece is not None and left_piece.color != piece.color:
+            valid_movements.append(left_piece.position)
+        if right_piece is not None and right_piece.color != piece.color:
+            valid_movements.append(right_piece.position)
 
     if piece.piece.upper() == "N":
         x = letter_to_number(piece.position[0])
