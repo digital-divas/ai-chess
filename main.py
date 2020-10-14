@@ -15,6 +15,8 @@ pygame.display.set_caption("ai-chess")
 
 block_size = tabletop_size / 8
 
+movements_history = []
+
 
 class PiecePosition(object):
     def __init__(self, color: str, piece: str, position: str):
@@ -131,19 +133,84 @@ def get_valid_movements(piece):
 
     valid_movements = []
 
-    if piece.piece.upper() == "P" and piece.color == "w":
-        if piece.position[1] == "2":
-            valid_movements.append(piece.position[0] + "3")
-            valid_movements.append(piece.position[0] + "4")
-        else:
-            valid_movements.append(piece.position[0] + str(int(piece.position[1]) + 1))
+    if piece.piece.upper() == "P":
 
-    if piece.piece.upper() == "P" and piece.color == "b":
-        if piece.position[1] == "7":
-            valid_movements.append(piece.position[0] + "6")
-            valid_movements.append(piece.position[0] + "5")
-        else:
-            valid_movements.append(piece.position[0] + str(int(piece.position[1]) - 1))
+        # direction
+        direction = 1
+        if piece.color == "b":
+            direction = -1
+
+        # default movement ahead
+        ## if you are in the initial position, you can move 2 houses/squares
+        if (
+            (piece.color == "w" and piece.position[1] == "2")
+            or (piece.color == "b" and piece.position[1] == "7")
+        ) and get_piece_on_position(
+            piece.position[0] + str(int(piece.position[1]) + (1 * direction))
+        ) is None:
+            valid_movements.append(
+                piece.position[0] + str(int(piece.position[1]) + (1 * direction))
+            )
+            if (
+                get_piece_on_position(
+                    piece.position[0] + str(int(piece.position[1]) + (2 * direction))
+                )
+                is None
+            ):
+                valid_movements.append(
+                    piece.position[0] + str(int(piece.position[1]) + (2 * direction))
+                )
+        ## if you aren't on the initial position, you can move only 1 house/square
+        elif (
+            get_piece_on_position(
+                piece.position[0] + str(int(piece.position[1]) + (1 * direction))
+            )
+            is None
+        ):
+            valid_movements.append(
+                piece.position[0] + str(int(piece.position[1]) + (1 * direction))
+            )
+
+        # the 'capture' movement
+        ## default capture
+        left_piece = None
+        right_piece = None
+
+        number = letter_to_number(piece.position[0]) - 1
+        if number >= 0:
+            left_piece = get_piece_on_position(
+                number_to_letter(number) + str(int(piece.position[1]) + (1 * direction))
+            )
+
+        number = letter_to_number(piece.position[0]) + 1
+        if number <= 7:
+            right_piece = get_piece_on_position(
+                number_to_letter(number) + str(int(piece.position[1]) + (1 * direction))
+            )
+
+        if left_piece is not None and left_piece.color != piece.color:
+            valid_movements.append(left_piece.position)
+        if right_piece is not None and right_piece.color != piece.color:
+            valid_movements.append(right_piece.position)
+
+        ## en passant capture
+        if (piece.position[1] == "5" and piece.color == "w") or (
+            piece.position[1] == "4" and piece.color == "b"
+        ):
+            last_movement = movements_history[-1]
+            if (
+                last_movement["piece"].piece == "P"
+                and abs(int(last_movement["from"][1]) - int(last_movement["to"][1]))
+                == 2
+            ):
+                number = letter_to_number(piece.position[0])
+                possible_en_passant = letter_to_number(last_movement["to"][0])
+
+                if abs(number - possible_en_passant) == 1:
+                    valid_movements.append(
+                        last_movement["to"][0]
+                        + str(int(piece.position[1]) + (1 * direction))
+                    )
 
     if piece.piece.upper() == "N":
         x = letter_to_number(piece.position[0])
@@ -348,11 +415,13 @@ while True:
             number = 8 - (event.pos[1] // 100)
             piece = get_piece_on_position(letter + str(number))
 
+            # selected a piece to move
             if piece and piece.color == turn:
                 selected_piece = (event.pos[0] // 100, event.pos[1] // 100)
                 valid_movements = get_valid_movements(piece)
                 continue
 
+            # selected a place to move the piece
             if selected_piece[0] != -1:
 
                 if letter + str(number) not in valid_movements:
@@ -361,6 +430,7 @@ while True:
                 piece_letter = number_to_letter(selected_piece[0])
                 piece_number = 8 - (selected_piece[1])
                 old_piece = get_piece_on_position(piece_letter + str(piece_number))
+                from_position = old_piece.position
                 old_piece.position = letter + str(number)
 
                 if piece and piece.color != turn:
@@ -368,6 +438,13 @@ while True:
 
                 selected_piece = (-1, -1)
                 valid_movements = []
+                movements_history.append(
+                    {
+                        "piece": old_piece,
+                        "from": from_position,
+                        "to": old_piece.position,
+                    }
+                )
 
                 if turn == "w":
                     turn = "b"
