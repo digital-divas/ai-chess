@@ -129,10 +129,43 @@ def get_piece_on_position(position):
     return None
 
 
-def get_valid_movements(piece):
+def get_valid_movements(piece, looking_enemy_movements=False):
 
     valid_movements = []
+    check_positions = []
 
+    if not looking_enemy_movements:
+        for piece_position in piece_positions:
+            if piece_position.color != piece.color:
+                if piece_position.piece != "P":
+                    movements = get_valid_movements(piece_position, True)
+                else:
+                    movements = []
+                    direction = 1
+                    if piece_position.color == "b":
+                        direction = -1
+
+                    left_piece = None
+                    right_piece = None
+
+                    number = letter_to_number(piece_position.position[0]) - 1
+                    if number >= 0:
+                        movements.append(
+                            number_to_letter(number)
+                            + str(int(piece_position.position[1]) + (1 * direction))
+                        )
+
+                    number = letter_to_number(piece_position.position[0]) + 1
+                    if number <= 7:
+                        movements.append(
+                            number_to_letter(number)
+                            + str(int(piece_position.position[1]) + (1 * direction))
+                        )
+
+                for movement in movements:
+                    check_positions.append((movement, piece_position.piece))
+
+    # pawn
     if piece.piece.upper() == "P":
 
         # direction
@@ -212,6 +245,7 @@ def get_valid_movements(piece):
                         + str(int(piece.position[1]) + (1 * direction))
                     )
 
+    # knight
     if piece.piece.upper() == "N":
         x = letter_to_number(piece.position[0])
         y = piece.position[1]
@@ -239,16 +273,23 @@ def get_valid_movements(piece):
 
             target_piece = get_piece_on_position(position)
 
-            if target_piece and target_piece.color == piece.color:
+            if (
+                target_piece
+                and target_piece.color == piece.color
+                and not looking_enemy_movements
+            ):
                 continue
 
             valid_movements.append(position)
 
+    # rook or queen
     if piece.piece.upper() == "R" or piece.piece.upper() == "Q":
         x = letter_to_number(piece.position[0])
         y = int(piece.position[1])
 
         target_x = x - 1
+
+        already_first_break = False
 
         while target_x >= 0:
             target_letter = number_to_letter(target_x)
@@ -257,7 +298,7 @@ def get_valid_movements(piece):
             target_piece = get_piece_on_position(position)
 
             if target_piece is not None:
-                if target_piece.color != piece.color:
+                if target_piece.color != piece.color or looking_enemy_movements:
                     valid_movements.append(position)
                 break
 
@@ -275,7 +316,7 @@ def get_valid_movements(piece):
             target_piece = get_piece_on_position(position)
 
             if target_piece is not None:
-                if target_piece.color != piece.color:
+                if target_piece.color != piece.color or looking_enemy_movements:
                     valid_movements.append(position)
                 break
 
@@ -292,7 +333,7 @@ def get_valid_movements(piece):
             target_piece = get_piece_on_position(position)
 
             if target_piece is not None:
-                if target_piece.color != piece.color:
+                if target_piece.color != piece.color or looking_enemy_movements:
                     valid_movements.append(position)
                 break
 
@@ -310,7 +351,7 @@ def get_valid_movements(piece):
             target_piece = get_piece_on_position(position)
 
             if target_piece is not None:
-                if target_piece.color != piece.color:
+                if target_piece.color != piece.color or looking_enemy_movements:
                     valid_movements.append(position)
                 break
 
@@ -318,6 +359,7 @@ def get_valid_movements(piece):
 
             target_y += 1
 
+    # bishop or queen
     if piece.piece.upper() == "B" or piece.piece.upper() == "Q":
         x = letter_to_number(piece.position[0])
         y = int(piece.position[1])
@@ -332,7 +374,7 @@ def get_valid_movements(piece):
             target_piece = get_piece_on_position(position)
 
             if target_piece is not None:
-                if target_piece.color != piece.color:
+                if target_piece.color != piece.color or looking_enemy_movements:
                     valid_movements.append(position)
                 break
 
@@ -351,7 +393,7 @@ def get_valid_movements(piece):
             target_piece = get_piece_on_position(position)
 
             if target_piece is not None:
-                if target_piece.color != piece.color:
+                if target_piece.color != piece.color or looking_enemy_movements:
                     valid_movements.append(position)
                 break
 
@@ -370,7 +412,7 @@ def get_valid_movements(piece):
             target_piece = get_piece_on_position(position)
 
             if target_piece is not None:
-                if target_piece.color != piece.color:
+                if target_piece.color != piece.color or looking_enemy_movements:
                     valid_movements.append(position)
                 break
 
@@ -389,7 +431,7 @@ def get_valid_movements(piece):
             target_piece = get_piece_on_position(position)
 
             if target_piece is not None:
-                if target_piece.color != piece.color:
+                if target_piece.color != piece.color or looking_enemy_movements:
                     valid_movements.append(position)
                 break
 
@@ -397,6 +439,35 @@ def get_valid_movements(piece):
 
             target_x += 1
             target_y += 1
+
+    # king
+    if piece.piece.upper() == "K":
+        x = letter_to_number(piece.position[0])
+        y = int(piece.position[1])
+
+        targets = [(1, -1), (1, 0), (1, 1), (0, -1), (0, 1), (-1, -1), (-1, 0), (-1, 1)]
+
+        impossible_positions = [check_position[0] for check_position in check_positions]
+
+        for target in targets:
+
+            target_x = x + target[0]
+            target_y = y + target[1]
+
+            if target_x > 7 or target_x < 0:
+                continue
+
+            if target_y > 8 or target_y < 1:
+                continue
+
+            target_letter = number_to_letter(target_x)
+            position = target_letter + str(target_y)
+
+            target_piece = get_piece_on_position(position)
+
+            if target_piece is None or target_piece.color != piece.color:
+                if position not in impossible_positions:
+                    valid_movements.append(position)
 
     return valid_movements
 
