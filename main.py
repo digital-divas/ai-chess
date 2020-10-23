@@ -476,62 +476,99 @@ selected_piece = (-1, -1)
 valid_movements = []
 
 turn = "w"
+promote_dialog = False
 
 while True:
 
     for event in pygame.event.get():
 
         if event.type == pygame.MOUSEBUTTONDOWN:
-            letter = number_to_letter(event.pos[0] // 100)
-            number = 8 - (event.pos[1] // 100)
-            piece = get_piece_on_position(letter + str(number))
 
-            # selected a piece to move
-            if piece and piece.color == turn:
-                selected_piece = (event.pos[0] // 100, event.pos[1] // 100)
-                valid_movements = get_valid_movements(piece)
-                continue
+            if promote_dialog:
+                x = event.pos[0] / 100
+                y = event.pos[1] / 100
 
-            # selected a place to move the piece
-            if selected_piece[0] != -1:
+                if 4.5 > y > 3.5:
+                    if 3 > x > 2:
+                        for piece_position in piece_positions:
+                            if piece_position.position == movements_history[-1]["to"]:
+                                piece_position.piece = "Q"
+                                promote_dialog = False
+                    if 4 > x > 3:
+                        for piece_position in piece_positions:
+                            if piece_position.position == movements_history[-1]["to"]:
+                                piece_position.piece = "R"
+                                promote_dialog = False
+                    if 5 > x > 4:
+                        for piece_position in piece_positions:
+                            if piece_position.position == movements_history[-1]["to"]:
+                                piece_position.piece = "B"
+                                promote_dialog = False
+                    if 6 > x > 5:
+                        for piece_position in piece_positions:
+                            if piece_position.position == movements_history[-1]["to"]:
+                                piece_position.piece = "N"
+                                promote_dialog = False
 
-                if letter + str(number) not in valid_movements:
+            else:
+                letter = number_to_letter(event.pos[0] // 100)
+                number = 8 - (event.pos[1] // 100)
+                piece = get_piece_on_position(letter + str(number))
+
+                # selected a piece to move
+                if piece and piece.color == turn:
+                    selected_piece = (
+                        event.pos[0] // 100,
+                        event.pos[1] // 100,
+                    )
+                    valid_movements = get_valid_movements(piece)
                     continue
 
-                piece_letter = number_to_letter(selected_piece[0])
-                piece_number = 8 - (selected_piece[1])
-                old_piece = get_piece_on_position(piece_letter + str(piece_number))
-                from_position = old_piece.position
-                old_piece.position = letter + str(number)
+                # selected a place to move the piece
+                if selected_piece[0] != -1:
 
-                # default capture
-                if piece and piece.color != turn:
-                    piece_positions.remove(piece)
+                    if letter + str(number) not in valid_movements:
+                        continue
 
-                # capture by en passant
-                if (
-                    old_piece.piece == "P"
-                    and from_position[0] != old_piece.position[0]
-                    and piece is None
-                ):
-                    piece_positions.remove(movements_history[-1]["piece"])
+                    piece_letter = number_to_letter(selected_piece[0])
+                    piece_number = 8 - (selected_piece[1])
+                    old_piece = get_piece_on_position(piece_letter + str(piece_number))
+                    from_position = old_piece.position
+                    old_piece.position = letter + str(number)
 
-                selected_piece = (-1, -1)
-                valid_movements = []
-                movements_history.append(
-                    {
-                        "piece": old_piece,
-                        "from": from_position,
-                        "to": old_piece.position,
-                    }
-                )
+                    # default capture
+                    if piece and piece.color != turn:
+                        piece_positions.remove(piece)
 
-                if turn == "w":
-                    turn = "b"
-                else:
-                    turn = "w"
+                    # capture by en passant
+                    if (
+                        old_piece.piece == "P"
+                        and from_position[0] != old_piece.position[0]
+                        and piece is None
+                    ):
+                        piece_positions.remove(movements_history[-1]["piece"])
 
-                continue
+                    selected_piece = (-1, -1)
+                    valid_movements = []
+                    movements_history.append(
+                        {
+                            "piece": old_piece,
+                            "from": from_position,
+                            "to": old_piece.position,
+                        }
+                    )
+
+                    if old_piece.piece == "P" and (
+                        old_piece.position[1] == "1" or old_piece.position[1] == "8"
+                    ):
+                        promote_dialog = True
+
+                    if turn == "w":
+                        turn = "b"
+                    else:
+                        turn = "w"
+
+                    continue
 
         if event.type == pygame.QUIT:
             pygame.quit()
@@ -591,6 +628,57 @@ while True:
             position,
             15,
             1,
+        )
+
+    if promote_dialog:
+        pygame.draw.rect(
+            gameDisplay,
+            (255, 255, 255),
+            (block_size * 2, block_size * 3, block_size * 4, block_size * 2),
+            0,
+        )
+        pygame.draw.rect(
+            gameDisplay,
+            (0, 0, 0),
+            (block_size * 2, block_size * 3, block_size * 4, block_size * 2),
+            1,
+        )
+
+        promote_color = "b"
+
+        if turn == "b":
+            promote_color = "w"
+
+        gameDisplay.blit(
+            piece_image[promote_color + "-Q"],
+            (
+                (2 * block_size) + center_piece_img,
+                (3.5 * block_size) + center_piece_img,
+            ),
+        )
+
+        gameDisplay.blit(
+            piece_image[promote_color + "-R"],
+            (
+                (3 * block_size) + center_piece_img,
+                (3.5 * block_size) + center_piece_img,
+            ),
+        )
+
+        gameDisplay.blit(
+            piece_image[promote_color + "-B"],
+            (
+                (4 * block_size) + center_piece_img,
+                (3.5 * block_size) + center_piece_img,
+            ),
+        )
+
+        gameDisplay.blit(
+            piece_image[promote_color + "-N"],
+            (
+                (5 * block_size) + center_piece_img,
+                (3.5 * block_size) + center_piece_img,
+            ),
         )
 
     pygame.display.update()
