@@ -43,6 +43,8 @@ piece_image = {
     "b-K": pygame.image.load(os.path.join("icons", "b-king.png")),
 }
 
+pygame.display.set_icon(piece_image["w-N"])
+
 image_size = 96
 center_piece_img = (block_size - 96) / 2
 
