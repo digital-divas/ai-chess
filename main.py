@@ -755,8 +755,25 @@ while True:
                         turn = "w"
 
                     print_tabletop()
+                    in_check = False
                     if am_i_in_check(turn, piece_positions):
-                        print("voce esta em check")
+                        in_check = True
+
+                    the_game_continues = False
+                    for piece_position in piece_positions:
+                        if piece_position.color == turn:
+                            if len(get_valid_movements(piece_position)) > 0:
+                                the_game_continues = True
+                                break
+
+                    if not the_game_continues:
+                        if not in_check:
+                            print("It's a draw")
+                        else:
+                            if turn == "w":
+                                print("Black won the game.")
+                            else:
+                                print("White won the game.")
 
                     continue
 
