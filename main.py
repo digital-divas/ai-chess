@@ -602,6 +602,9 @@ def get_valid_movements(
 
     # king
     if piece.piece.upper() == "K":
+        # TODO
+        # precisa por o roque
+
         x = letter_to_number(piece.position[0])
         y = int(piece.position[1])
 
