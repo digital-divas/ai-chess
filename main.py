@@ -123,49 +123,104 @@ def number_to_letter(number):
         return "h"
 
 
-def get_piece_on_position(position):
-    for piece_position in piece_positions:
+def get_piece_on_position(position, conditional_piece_positions=None):
+    if conditional_piece_positions is None:
+        conditional_piece_positions = piece_positions
+
+    for piece_position in conditional_piece_positions:
         if piece_position.position == position:
             return piece_position
 
     return None
 
 
-def get_valid_movements(piece, looking_enemy_movements=False):
+def print_tabletop(conditional_piece_positions=None):
+    if conditional_piece_positions is None:
+        conditional_piece_positions = piece_positions
+
+    cols = ["a", "b", "c", "d", "e", "f", "g", "h"]
+    lines = ["8", "7", "6", "5", "4", "3", "2", "1"]
+
+    print()
+    for x, line in enumerate(lines):
+        for y, col in enumerate(cols):
+
+            piece = get_piece_on_position(col + line, conditional_piece_positions)
+
+            if (x + y) % 2 == 0:
+                print(
+                    "\033[0;"
+                    + ("37" if piece is not None and piece.color == "w" else "30")
+                    + ";43m"
+                    + " "
+                    + (piece.piece if piece is not None else " ")
+                    + " "
+                    + "\033[0m",
+                    end="",
+                )
+            else:
+                print(
+                    "\033[0;"
+                    + ("37" if piece is not None and piece.color == "w" else "30")
+                    + ";42m"
+                    + " "
+                    + (piece.piece if piece is not None else " ")
+                    + " "
+                    + "\033[0m",
+                    end="",
+                )
+
+        print()
+
+
+def am_i_in_check(my_color, conditional_piece_positions: List[PiecePosition]):
+
+    my_king_position = ""
+
+    for piece_position in conditional_piece_positions:
+        if piece_position.color == my_color and piece_position.piece == "K":
+            my_king_position = piece_position.position
+
+    for piece_position in conditional_piece_positions:
+        if piece_position.color != my_color:
+            if piece_position.piece != "P":
+                movements = get_valid_movements(
+                    piece_position, True, conditional_piece_positions
+                )
+            else:
+                movements = []
+                direction = 1
+                if piece_position.color == "b":
+                    direction = -1
+
+                left_piece = None
+                right_piece = None
+
+                number = letter_to_number(piece_position.position[0]) - 1
+                if number >= 0:
+                    movements.append(
+                        number_to_letter(number)
+                        + str(int(piece_position.position[1]) + (1 * direction))
+                    )
+
+                number = letter_to_number(piece_position.position[0]) + 1
+                if number <= 7:
+                    movements.append(
+                        number_to_letter(number)
+                        + str(int(piece_position.position[1]) + (1 * direction))
+                    )
+
+            if my_king_position in movements:
+                return True
+
+    return False
+
+
+def get_valid_movements(
+    piece, looking_enemy_movements=False, conditional_piece_positions=None
+):
 
     valid_movements = []
-    check_positions = []
-
-    if not looking_enemy_movements:
-        for piece_position in piece_positions:
-            if piece_position.color != piece.color:
-                if piece_position.piece != "P":
-                    movements = get_valid_movements(piece_position, True)
-                else:
-                    movements = []
-                    direction = 1
-                    if piece_position.color == "b":
-                        direction = -1
-
-                    left_piece = None
-                    right_piece = None
-
-                    number = letter_to_number(piece_position.position[0]) - 1
-                    if number >= 0:
-                        movements.append(
-                            number_to_letter(number)
-                            + str(int(piece_position.position[1]) + (1 * direction))
-                        )
-
-                    number = letter_to_number(piece_position.position[0]) + 1
-                    if number <= 7:
-                        movements.append(
-                            number_to_letter(number)
-                            + str(int(piece_position.position[1]) + (1 * direction))
-                        )
-
-                for movement in movements:
-                    check_positions.append((movement, piece_position.piece))
 
     # pawn
     if piece.piece.upper() == "P":
@@ -181,14 +236,16 @@ def get_valid_movements(piece, looking_enemy_movements=False):
             (piece.color == "w" and piece.position[1] == "2")
             or (piece.color == "b" and piece.position[1] == "7")
         ) and get_piece_on_position(
-            piece.position[0] + str(int(piece.position[1]) + (1 * direction))
+            piece.position[0] + str(int(piece.position[1]) + (1 * direction)),
+            conditional_piece_positions,
         ) is None:
             valid_movements.append(
                 piece.position[0] + str(int(piece.position[1]) + (1 * direction))
             )
             if (
                 get_piece_on_position(
-                    piece.position[0] + str(int(piece.position[1]) + (2 * direction))
+                    piece.position[0] + str(int(piece.position[1]) + (2 * direction)),
+                    conditional_piece_positions,
                 )
                 is None
             ):
@@ -198,7 +255,8 @@ def get_valid_movements(piece, looking_enemy_movements=False):
         ## if you aren't on the initial position, you can move only 1 house/square
         elif (
             get_piece_on_position(
-                piece.position[0] + str(int(piece.position[1]) + (1 * direction))
+                piece.position[0] + str(int(piece.position[1]) + (1 * direction)),
+                conditional_piece_positions,
             )
             is None
         ):
@@ -214,13 +272,17 @@ def get_valid_movements(piece, looking_enemy_movements=False):
         number = letter_to_number(piece.position[0]) - 1
         if number >= 0:
             left_piece = get_piece_on_position(
-                number_to_letter(number) + str(int(piece.position[1]) + (1 * direction))
+                number_to_letter(number)
+                + str(int(piece.position[1]) + (1 * direction)),
+                conditional_piece_positions,
             )
 
         number = letter_to_number(piece.position[0]) + 1
         if number <= 7:
             right_piece = get_piece_on_position(
-                number_to_letter(number) + str(int(piece.position[1]) + (1 * direction))
+                number_to_letter(number)
+                + str(int(piece.position[1]) + (1 * direction)),
+                conditional_piece_positions,
             )
 
         if left_piece is not None and left_piece.color != piece.color:
@@ -273,7 +335,7 @@ def get_valid_movements(piece, looking_enemy_movements=False):
 
             position = number_to_letter(possibility[0]) + str(possibility[1])
 
-            target_piece = get_piece_on_position(position)
+            target_piece = get_piece_on_position(position, conditional_piece_positions)
 
             if (
                 target_piece
@@ -282,7 +344,16 @@ def get_valid_movements(piece, looking_enemy_movements=False):
             ):
                 continue
 
-            valid_movements.append(position)
+            if looking_enemy_movements:
+                valid_movements.append(position)
+                continue
+
+            conditional_piece_positions2 = change_a_piece_position_for_valid_movements(
+                piece, position
+            )
+
+            if not am_i_in_check(piece.color, conditional_piece_positions2):
+                valid_movements.append(position)
 
     # rook or queen
     if piece.piece.upper() == "R" or piece.piece.upper() == "Q":
@@ -297,14 +368,21 @@ def get_valid_movements(piece, looking_enemy_movements=False):
             target_letter = number_to_letter(target_x)
             position = target_letter + str(y)
 
-            target_piece = get_piece_on_position(position)
+            target_piece = get_piece_on_position(position, conditional_piece_positions)
 
             if target_piece is not None:
-                if target_piece.color != piece.color or looking_enemy_movements:
+                if target_piece.color != piece.color:
                     valid_movements.append(position)
                 break
 
-            valid_movements.append(position)
+            conditional_piece_positions2 = change_a_piece_position_for_valid_movements(
+                piece, position
+            )
+
+            if looking_enemy_movements or not am_i_in_check(
+                piece.color, conditional_piece_positions2
+            ):
+                valid_movements.append(position)
 
             target_x -= 1
 
@@ -315,14 +393,21 @@ def get_valid_movements(piece, looking_enemy_movements=False):
 
             position = target_letter + str(y)
 
-            target_piece = get_piece_on_position(position)
+            target_piece = get_piece_on_position(position, conditional_piece_positions)
 
             if target_piece is not None:
-                if target_piece.color != piece.color or looking_enemy_movements:
+                if target_piece.color != piece.color:
                     valid_movements.append(position)
                 break
 
-            valid_movements.append(position)
+            conditional_piece_positions2 = change_a_piece_position_for_valid_movements(
+                piece, position
+            )
+
+            if looking_enemy_movements or not am_i_in_check(
+                piece.color, conditional_piece_positions2
+            ):
+                valid_movements.append(position)
 
             target_x += 1
 
@@ -332,14 +417,21 @@ def get_valid_movements(piece, looking_enemy_movements=False):
             target_letter = number_to_letter(x)
             position = target_letter + str(target_y)
 
-            target_piece = get_piece_on_position(position)
+            target_piece = get_piece_on_position(position, conditional_piece_positions)
 
             if target_piece is not None:
-                if target_piece.color != piece.color or looking_enemy_movements:
+                if target_piece.color != piece.color:
                     valid_movements.append(position)
                 break
 
-            valid_movements.append(position)
+            conditional_piece_positions2 = change_a_piece_position_for_valid_movements(
+                piece, position
+            )
+
+            if looking_enemy_movements or not am_i_in_check(
+                piece.color, conditional_piece_positions2
+            ):
+                valid_movements.append(position)
 
             target_y -= 1
 
@@ -350,14 +442,21 @@ def get_valid_movements(piece, looking_enemy_movements=False):
 
             position = target_letter + str(target_y)
 
-            target_piece = get_piece_on_position(position)
+            target_piece = get_piece_on_position(position, conditional_piece_positions)
 
             if target_piece is not None:
-                if target_piece.color != piece.color or looking_enemy_movements:
+                if target_piece.color != piece.color:
                     valid_movements.append(position)
                 break
 
-            valid_movements.append(position)
+            conditional_piece_positions2 = change_a_piece_position_for_valid_movements(
+                piece, position
+            )
+
+            if looking_enemy_movements or not am_i_in_check(
+                piece.color, conditional_piece_positions2
+            ):
+                valid_movements.append(position)
 
             target_y += 1
 
@@ -373,14 +472,21 @@ def get_valid_movements(piece, looking_enemy_movements=False):
             target_letter = number_to_letter(target_x)
             position = target_letter + str(target_y)
 
-            target_piece = get_piece_on_position(position)
+            target_piece = get_piece_on_position(position, conditional_piece_positions)
 
             if target_piece is not None:
-                if target_piece.color != piece.color or looking_enemy_movements:
+                if target_piece.color != piece.color:
                     valid_movements.append(position)
                 break
 
-            valid_movements.append(position)
+            conditional_piece_positions2 = change_a_piece_position_for_valid_movements(
+                piece, position
+            )
+
+            if looking_enemy_movements or not am_i_in_check(
+                piece.color, conditional_piece_positions2
+            ):
+                valid_movements.append(position)
 
             target_x -= 1
             target_y -= 1
@@ -392,14 +498,21 @@ def get_valid_movements(piece, looking_enemy_movements=False):
             target_letter = number_to_letter(target_x)
             position = target_letter + str(target_y)
 
-            target_piece = get_piece_on_position(position)
+            target_piece = get_piece_on_position(position, conditional_piece_positions)
 
             if target_piece is not None:
-                if target_piece.color != piece.color or looking_enemy_movements:
+                if target_piece.color != piece.color:
                     valid_movements.append(position)
                 break
 
-            valid_movements.append(position)
+            conditional_piece_positions2 = change_a_piece_position_for_valid_movements(
+                piece, position
+            )
+
+            if looking_enemy_movements or not am_i_in_check(
+                piece.color, conditional_piece_positions2
+            ):
+                valid_movements.append(position)
 
             target_x += 1
             target_y -= 1
@@ -411,14 +524,21 @@ def get_valid_movements(piece, looking_enemy_movements=False):
             target_letter = number_to_letter(target_x)
             position = target_letter + str(target_y)
 
-            target_piece = get_piece_on_position(position)
+            target_piece = get_piece_on_position(position, conditional_piece_positions)
 
             if target_piece is not None:
-                if target_piece.color != piece.color or looking_enemy_movements:
+                if target_piece.color != piece.color:
                     valid_movements.append(position)
                 break
 
-            valid_movements.append(position)
+            conditional_piece_positions2 = change_a_piece_position_for_valid_movements(
+                piece, position
+            )
+
+            if looking_enemy_movements or not am_i_in_check(
+                piece.color, conditional_piece_positions2
+            ):
+                valid_movements.append(position)
 
             target_x -= 1
             target_y += 1
@@ -430,14 +550,21 @@ def get_valid_movements(piece, looking_enemy_movements=False):
             target_letter = number_to_letter(target_x)
             position = target_letter + str(target_y)
 
-            target_piece = get_piece_on_position(position)
+            target_piece = get_piece_on_position(position, conditional_piece_positions)
 
             if target_piece is not None:
-                if target_piece.color != piece.color or looking_enemy_movements:
+                if target_piece.color != piece.color:
                     valid_movements.append(position)
                 break
 
-            valid_movements.append(position)
+            conditional_piece_positions2 = change_a_piece_position_for_valid_movements(
+                piece, position
+            )
+
+            if looking_enemy_movements or not am_i_in_check(
+                piece.color, conditional_piece_positions2
+            ):
+                valid_movements.append(position)
 
             target_x += 1
             target_y += 1
@@ -448,8 +575,6 @@ def get_valid_movements(piece, looking_enemy_movements=False):
         y = int(piece.position[1])
 
         targets = [(1, -1), (1, 0), (1, 1), (0, -1), (0, 1), (-1, -1), (-1, 0), (-1, 1)]
-
-        impossible_positions = [check_position[0] for check_position in check_positions]
 
         for target in targets:
 
@@ -465,13 +590,41 @@ def get_valid_movements(piece, looking_enemy_movements=False):
             target_letter = number_to_letter(target_x)
             position = target_letter + str(target_y)
 
-            target_piece = get_piece_on_position(position)
+            target_piece = get_piece_on_position(position, conditional_piece_positions)
 
             if target_piece is None or target_piece.color != piece.color:
-                if position not in impossible_positions:
+
+                conditional_piece_positions2 = (
+                    change_a_piece_position_for_valid_movements(piece, position)
+                )
+
+                if looking_enemy_movements or not am_i_in_check(
+                    piece.color, conditional_piece_positions2
+                ):
                     valid_movements.append(position)
 
     return valid_movements
+
+
+def change_a_piece_position_for_valid_movements(
+    piece: PiecePosition, to_conditional_position: str
+):
+
+    conditional_piece_positions = []
+
+    for piece_position in piece_positions:
+        if (
+            piece_position.piece == piece.piece
+            and piece_position.color == piece.color
+            and piece_position.position == piece.position
+        ):
+            conditional_piece_positions.append(
+                PiecePosition(piece.color, piece.piece, to_conditional_position)
+            )
+        elif piece_position.position != to_conditional_position:
+            conditional_piece_positions.append(piece_position)
+
+    return conditional_piece_positions
 
 
 selected_piece = (-1, -1)
@@ -569,6 +722,10 @@ while True:
                         turn = "b"
                     else:
                         turn = "w"
+
+                    print_tabletop()
+                    if am_i_in_check(turn, piece_positions):
+                        print("voce esta em check")
 
                     continue
 
