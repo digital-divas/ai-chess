@@ -232,37 +232,51 @@ def get_valid_movements(
 
         # default movement ahead
         ## if you are in the initial position, you can move 2 houses/squares
+        position = piece.position[0] + str(int(piece.position[1]) + (1 * direction))
         if (
             (piece.color == "w" and piece.position[1] == "2")
             or (piece.color == "b" and piece.position[1] == "7")
         ) and get_piece_on_position(
-            piece.position[0] + str(int(piece.position[1]) + (1 * direction)),
+            position,
             conditional_piece_positions,
         ) is None:
-            valid_movements.append(
-                piece.position[0] + str(int(piece.position[1]) + (1 * direction))
+
+            conditional_piece_positions2 = change_a_piece_position_for_valid_movements(
+                piece, position
             )
+
+            if not am_i_in_check(piece.color, conditional_piece_positions2):
+                valid_movements.append(position)
+
+            position = piece.position[0] + str(int(piece.position[1]) + (2 * direction))
             if (
                 get_piece_on_position(
-                    piece.position[0] + str(int(piece.position[1]) + (2 * direction)),
+                    position,
                     conditional_piece_positions,
                 )
                 is None
             ):
-                valid_movements.append(
-                    piece.position[0] + str(int(piece.position[1]) + (2 * direction))
+                conditional_piece_positions2 = (
+                    change_a_piece_position_for_valid_movements(piece, position)
                 )
+
+                if not am_i_in_check(piece.color, conditional_piece_positions2):
+                    valid_movements.append(position)
+
         ## if you aren't on the initial position, you can move only 1 house/square
         elif (
             get_piece_on_position(
-                piece.position[0] + str(int(piece.position[1]) + (1 * direction)),
+                position,
                 conditional_piece_positions,
             )
             is None
         ):
-            valid_movements.append(
-                piece.position[0] + str(int(piece.position[1]) + (1 * direction))
+            conditional_piece_positions2 = change_a_piece_position_for_valid_movements(
+                piece, position
             )
+
+            if not am_i_in_check(piece.color, conditional_piece_positions2):
+                valid_movements.append(position)
 
         # the 'capture' movement
         ## default capture
@@ -286,9 +300,21 @@ def get_valid_movements(
             )
 
         if left_piece is not None and left_piece.color != piece.color:
-            valid_movements.append(left_piece.position)
+
+            conditional_piece_positions2 = change_a_piece_position_for_valid_movements(
+                piece, left_piece.position
+            )
+
+            if not am_i_in_check(piece.color, conditional_piece_positions2):
+                valid_movements.append(left_piece.position)
+
         if right_piece is not None and right_piece.color != piece.color:
-            valid_movements.append(right_piece.position)
+            conditional_piece_positions2 = change_a_piece_position_for_valid_movements(
+                piece, right_piece.position
+            )
+
+            if not am_i_in_check(piece.color, conditional_piece_positions2):
+                valid_movements.append(right_piece.position)
 
         ## en passant capture
         if (piece.position[1] == "5" and piece.color == "w") or (
@@ -304,10 +330,15 @@ def get_valid_movements(
                 possible_en_passant = letter_to_number(last_movement["to"][0])
 
                 if abs(number - possible_en_passant) == 1:
-                    valid_movements.append(
-                        last_movement["to"][0]
-                        + str(int(piece.position[1]) + (1 * direction))
+                    position = last_movement["to"][0] + str(
+                        int(piece.position[1]) + (1 * direction)
                     )
+                    conditional_piece_positions2 = (
+                        change_a_piece_position_for_valid_movements(piece, position)
+                    )
+
+                    if not am_i_in_check(piece.color, conditional_piece_positions2):
+                        valid_movements.append(position)
 
     # knight
     if piece.piece.upper() == "N":
