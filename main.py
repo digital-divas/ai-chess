@@ -23,6 +23,7 @@ class PiecePosition(object):
         self.color = color
         self.piece = piece
         self.position = position
+        self.have_been_moved = False
 
     def __repr__(self):
         return f"<PiecePosition - color: {self.color} - piece: {self.piece} - position: {self.position} >"
@@ -176,6 +177,9 @@ def print_tabletop(conditional_piece_positions=None):
 def am_i_in_check(my_color, conditional_piece_positions: List[PiecePosition]):
 
     my_king_position = ""
+
+    if conditional_piece_positions is None:
+        conditional_piece_positions = piece_positions
 
     for piece_position in conditional_piece_positions:
         if piece_position.color == my_color and piece_position.piece == "K":
@@ -602,8 +606,6 @@ def get_valid_movements(
 
     # king
     if piece.piece.upper() == "K":
-        # TODO
-        # precisa por o roque
 
         x = letter_to_number(piece.position[0])
         y = int(piece.position[1])
@@ -637,16 +639,111 @@ def get_valid_movements(
                 ):
                     valid_movements.append(position)
 
+        # Castling
+        if not piece.have_been_moved and (
+            looking_enemy_movements
+            or not am_i_in_check(piece.color, conditional_piece_positions)
+        ):
+            my_rooks = get_rooks(piece.color, conditional_piece_positions)
+            for rook in my_rooks:
+                if not rook.have_been_moved:
+                    line = rook.position[1]
+                    # Queen Side
+                    if rook.position[0] == "a":
+                        if (
+                            get_piece_on_position("b" + line) is None
+                            and get_piece_on_position("c" + line) is None
+                            and get_piece_on_position("d" + line) is None
+                        ):
+
+                            conditional_piece_positions2 = (
+                                change_a_piece_position_for_valid_movements(
+                                    piece, "d" + line
+                                )
+                            )
+
+                            if looking_enemy_movements or not am_i_in_check(
+                                piece.color, conditional_piece_positions2
+                            ):
+
+                                conditional_piece_positions2 = (
+                                    change_a_piece_position_for_valid_movements(
+                                        piece, "c" + line
+                                    )
+                                )
+
+                                conditional_piece_positions3 = (
+                                    change_a_piece_position_for_valid_movements(
+                                        rook, "d" + line, conditional_piece_positions2
+                                    )
+                                )
+
+                                if looking_enemy_movements or not am_i_in_check(
+                                    piece.color, conditional_piece_positions3
+                                ):
+                                    valid_movements.append("c" + line)
+                    # King Side
+                    else:
+                        if (
+                            get_piece_on_position("g" + line) is None
+                            and get_piece_on_position("f" + line) is None
+                        ):
+
+                            conditional_piece_positions2 = (
+                                change_a_piece_position_for_valid_movements(
+                                    piece, "f" + line
+                                )
+                            )
+
+                            if looking_enemy_movements or not am_i_in_check(
+                                piece.color, conditional_piece_positions2
+                            ):
+
+                                conditional_piece_positions2 = (
+                                    change_a_piece_position_for_valid_movements(
+                                        piece, "g" + line
+                                    )
+                                )
+
+                                conditional_piece_positions3 = (
+                                    change_a_piece_position_for_valid_movements(
+                                        rook, "f" + line, conditional_piece_positions2
+                                    )
+                                )
+
+                                if looking_enemy_movements or not am_i_in_check(
+                                    piece.color, conditional_piece_positions3
+                                ):
+                                    valid_movements.append("g" + line)
+
     return valid_movements
 
 
+def get_rooks(color, conditional_piece_positions=None) -> List[PiecePosition]:
+    if conditional_piece_positions is None:
+        conditional_piece_positions = piece_positions
+
+    rooks = []
+
+    for piece_position in conditional_piece_positions:
+        if piece_position.piece == "R" and piece_position.color == color:
+            rooks.append(piece_position)
+
+    return rooks
+
+
 def change_a_piece_position_for_valid_movements(
-    piece: PiecePosition, to_conditional_position: str
-):
+    piece: PiecePosition,
+    to_conditional_position: str,
+    conditional_piece_position_param=None,
+) -> List[PiecePosition]:
 
     conditional_piece_positions = []
 
-    for piece_position in piece_positions:
+    if conditional_piece_position_param is None:
+        conditional_piece_position_param = piece_positions
+
+    for piece_position in conditional_piece_position_param:
         if (
             piece_position.piece == piece.piece
             and piece_position.color == piece.color
@@ -725,6 +822,23 @@ while True:
                     from_position = old_piece.position
                     old_piece.position = letter + str(number)
 
+                    # Castling
+                    if old_piece.piece == "K" and from_position[0] == "e":
+                        # king side
+                        if old_piece.position[0] == "g":
+                            rook_castling = get_piece_on_position(
+                                "h" + from_position[1]
+                            )
+                            rook_castling.position = "f" + from_position[1]
+                            rook_castling.have_been_moved = True
+                        # queen side
+                        elif old_piece.position[0] == "c":
+                            rook_castling = get_piece_on_position(
+                                "a" + from_position[1]
+                            )
+                            rook_castling.position = "d" + from_position[1]
+                            rook_castling.have_been_moved = True
+
                     # default capture
                     if piece and piece.color != turn:
                         piece_positions.remove(piece)
@@ -746,6 +860,7 @@ while True:
                             "to": old_piece.position,
                         }
                     )
+                    old_piece.have_been_moved = True
 
                     if old_piece.piece == "P" and (
                         old_piece.position[1] == "1" or old_piece.position[1] == "8"
